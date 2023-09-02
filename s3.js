@@ -1,5 +1,7 @@
 require("dotenv").config();
 
+const EventEmitter = require("events");
+
 const fs = require("fs");
 
 const S3 = require("aws-sdk/clients/s3");
@@ -26,12 +28,27 @@ function uploadFile(file) {
 
 // downloads a file from s3
 function getFileStream(fileKey) {
-  const downloadParams = {
-    Key: fileKey,
-    Bucket: bucketName,
-  };
+  try {
+    const eventEmitter = new EventEmitter();
 
-  return s3.getObject(downloadParams).createReadStream();
+    const downloadParams = {
+      Key: fileKey,
+      Bucket: bucketName,
+    };
+
+    const s3Stream = s3.getObject(downloadParams).createReadStream();
+
+    s3Stream.on("error", function (err) {
+      console.error(err);
+      eventEmitter.emit("error", err);
+    });
+
+    eventEmitter.stream = s3Stream;
+
+    return eventEmitter;
+  } catch (error) {
+    console.log(error);
+  }
 }
 
 exports.uploadFile = uploadFile;

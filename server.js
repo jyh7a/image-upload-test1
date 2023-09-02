@@ -11,10 +11,20 @@ const upload = multer({ dest: "uploads" });
 const { uploadFile, getFileStream } = require("./s3");
 
 app.get("/images/:key", (req, res) => {
-  const key = req.params.key;
-  const readStream = getFileStream(key);
+  try {
+    const key = req.params.key;
+    const fileStreamEmitter = getFileStream(key);
 
-  readStream.pipe(res);
+    fileStreamEmitter.on("error", (error) => {
+      console.error(error);
+      res.status(500).send("Could not download the file");
+    });
+
+    fileStreamEmitter.stream.pipe(res);
+  } catch (error) {
+    console.log(error);
+    res.status(500).send("An error occurred");
+  }
 });
 
 app.post("/images", upload.single("image"), async (req, res) => {
