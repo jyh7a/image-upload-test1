@@ -18,21 +18,25 @@ app.get("/images/:key", (req, res) => {
 });
 
 app.post("/images", upload.single("image"), async (req, res) => {
-  const file = req.file;
-  console.log({ file });
+  try {
+    const file = req.file;
+    console.log({ file });
 
-  // apply filter
-  // resize
+    // apply filter
+    // resize
 
-  const result = await uploadFile(file);
-  console.log({ result });
+    const result = await uploadFile(file);
+    console.log({ result });
 
-  await unlinkFile(file.path);
+    await unlinkFile(file.path);
 
-  const description = req.body.description;
-  console.log({ description });
+    const description = req.body.description;
+    console.log({ description });
 
-  res.send({ imagePath: `/images/${result.Key}` });
+    res.send({ imagePath: `/images/${result.Key}` });
+  } catch (error) {
+    console.log(error);
+  }
 });
 
 app.listen(8080, () => console.log(`http://127.0.0.1:8080`));
