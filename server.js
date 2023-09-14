@@ -4,8 +4,24 @@ const multer = require("multer");
 const fs = require("fs");
 const utils = require("util");
 const unlinkFile = utils.promisify(fs.unlink);
-require("dotenv").config();
 const mysql = require("mysql2");
+const {
+  client,
+  createIndex,
+  insertDummyData,
+  searchIndex,
+} = require("./opensearch");
+
+// openSearch 연결확인
+// client.ping({}, function (error) {
+//   if (error) {
+//     console.error("Elasticsearch cluster is down!");
+//   } else {
+//     console.log("Elasticsearch cluster is up!");
+//   }
+// });
+
+require("dotenv").config();
 
 const app = express();
 
@@ -33,6 +49,33 @@ const db = mysql.createConnection({
 db.connect((err) => {
   if (err) throw err;
   console.log("Connected to the database");
+});
+
+// 인덱스 생성 및 더미 데이터 삽입 라우트
+app.get("/api/index-create", async (req, res) => {
+  try {
+    const indexName = "my_index";
+    const dummyData = { key: "value" };
+
+    await createIndex(indexName);
+    await insertDummyData(indexName, dummyData);
+
+    res.status(200).json({ message: "Index created and dummy data inserted." });
+  } catch (error) {
+    console.error("Error creating index:", error);
+    res.status(500).json({ message: "Error creating index." });
+  }
+});
+
+// 인덱스 내 데이터 조회 라우트
+app.get("/api/index", async (req, res) => {
+  try {
+    const data = await searchIndex("my_index");
+    res.status(200).json({ data });
+  } catch (error) {
+    console.error("Error fetching data:", error);
+    res.status(500).json({ message: "Error fetching data." });
+  }
 });
 
 app.get("/images/:key", (req, res) => {
@@ -140,5 +183,5 @@ const httpsOptions = {
 };
 
 https.createServer(httpsOptions, app).listen(8080, () => {
-  console.log("http://127.0.0.1:8080");
+  console.log("https://127.0.0.1:8080");
 });

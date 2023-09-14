@@ -40,6 +40,7 @@
     "middlewares",
     "mogoose",
     "nestjs",
+    "opensearch",
     "resave",
     "sequelize",
     "typeorm"
